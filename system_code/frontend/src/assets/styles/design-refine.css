@@ -1,0 +1,206 @@
+/**
+ * 全局视觉细化（应用 frontend-design 技能）
+ *
+ * 诊断：原设计呈现"AI 生成默认特征"——
+ *   1. 万事同一圆角 + 同一柔和阴影的卡片堆（SaaS-card kit）
+ *   2. 元信息用中点号连缀（A · B · C）
+ *   3. 装饰性渐变铺在日常控件上
+ *   4. 卡片悬停位移 + 高光扫过（generic motion）
+ *
+ * 主题定位：**临床监护**——面向护理人员，强调精确、克制、高可读。
+ * 因此确立三条规则：
+ *   · 结构用"细线与留白"表达，而不是把一切装进卡片
+ *   · 只有两类承载面：flat（数据面板，无阴影）与 raised（交互/浮动，有阴影）
+ *   · 渐变只用于身份标识（头像），不出现在按钮与装饰上
+ */
+
+/* ══════════════ 1. 承载面：只有两级 ══════════════ */
+
+/* flat —— 数据面板：细边、无阴影、小圆角（更接近仪器面板而非营销卡片） */
+.panel,
+.chart-card,
+.table-card,
+.monitor-card,
+.stat-card,
+.metric-card,
+.info-card,
+.form-card,
+.list-card,
+.empty-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: none;
+  overflow: hidden;
+}
+
+/* raised —— 仅用于可交互 / 浮层单元，明确比 flat 高一级 */
+.modal,
+.drawer,
+.drop-panel,
+.agent-panel,
+.welcome-card,
+.confirm-dialog {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+/* 取消"卡片悬停上浮 + 高光扫过"这类通用动效 */
+.stat-card:hover,
+.chart-card:hover,
+.panel:hover,
+.metric-card:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--border-subtle);
+}
+.stat-card::before,
+.chart-card::before,
+.panel::before {
+  display: none !important;
+}
+
+/* ══════════════ 2. 间距节奏：4px 基，按层级取用 ══════════════ */
+.page { padding: var(--space-5) var(--space-6) var(--space-8); }
+.page-header { margin-bottom: var(--space-6); }
+/* 只给**逐个堆叠**的面板加上间距。
+   加 :not(.grid-1-1 > *) 式的排除不好写，直接限定"是 .page 的直接子元素"：
+   栅格里的第二个面板同样是 `.panel + .panel`，若也被加上 margin-top，
+   它在同一行里就会被整体下推 16px、高度比左边矮一截 ——
+   这正是"同一行的块大小不一样"的来源。 */
+.page > .panel + .panel,
+.page > .panel + .table-card,
+.page > .stat-grid + .panel { margin-top: var(--space-4); }
+
+/* ══════════════ 3. 排版层级：数据优先 ══════════════ */
+h1, .page-header h1 { font-size: var(--text-xl); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: var(--text-lg); font-weight: 650; }
+.panel-title { font-size: var(--text-md); font-weight: 650; letter-spacing: -0.005em; }
+
+/* 数值一律等宽数字，保证列对齐（监护场景最常读的就是数字） */
+.stat-value, .stat-num, .bd-num, .req-value, .mi-value, .dist-num, td, th {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 标签不再用全大写 + 宽字距（AI 默认特征），改为正常大小写 + 字重区分 */
+.stat-label, .bd-title, .side-section-title, .si-label {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* 元信息分隔：不再依赖中点号堆叠，改为细竖线 */
+.meta-sep {
+  display: inline-block;
+  width: 1px;
+  height: 0.9em;
+  margin: 0 8px;
+  vertical-align: -0.1em;
+  background: var(--border-default);
+}
+
+/* ══════════════ 4. 状态色：实心点 + 文字，不用大色块 ══════════════ */
+.status-chip, .level-tag {
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+/* ══════════════ 5. 按钮：扁平，去掉装饰性渐变 ══════════════ */
+button,
+.btn-primary,
+.btn-login,
+.send-btn {
+  transition: background var(--duration-fast) var(--ease-smooth),
+              border-color var(--duration-fast) var(--ease-smooth),
+              color var(--duration-fast) var(--ease-smooth);
+}
+.btn-primary,
+.btn-login,
+.send-btn {
+  background: var(--primary);
+  box-shadow: none;
+}
+.btn-primary:hover:not(:disabled),
+.btn-login:hover:not(:disabled),
+.send-btn:hover:not(:disabled) {
+  background: var(--primary-hover);
+  transform: none;
+}
+
+/* ══════════════ 6. 表格：用细线分隔，不用斑马纹 ══════════════ */
+table { border-collapse: collapse; }
+thead th {
+  border-bottom: 1px solid var(--border-default);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+tbody tr { border-bottom: 1px solid var(--border-subtle); }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:nth-child(even) { background: transparent; }
+
+/* ══════════════ 7. 视觉对齐（实测消除断代）══════════════
+   实测发现同一"数据面板"角色在不同页面用了 10/14/16px 三种圆角，
+   且 /statistics 有阴影而其余没有，/elders、/schedule、/settings
+   使用了设计系统之外的类名。此段统一到 --radius-md 且无阴影。 */
+
+.panel,
+.stat-card,
+.metric-card,
+.info-card,
+.form-card,
+.list-card,
+.empty-card,
+.chart-card,
+.table-card,
+.monitor-card,
+.alert-list-card,
+.camera-list,
+.model-section,
+.history-section,
+.mobile-list,
+.section,
+[class$='-card']:not(.modal),
+[class^='card-']:not(.card-actions):not(.card-header):not(.card-body):not(.card-footer) {
+  /* !important 是刻意的：16 个视图各有独立 scoped 样式（带 [data-v-*] 属性选择器），
+     其优先级高于全局类选择器。设计系统需要强制统一时，只能显式提升优先级。 */
+  border-radius: var(--radius-md) !important;
+  box-shadow: none !important;
+}
+
+/* 唯一抬起层级：真正的浮层仍保留阴影与更大圆角 */
+.modal,
+.modal-box,
+.drawer,
+.drop-panel,
+.agent-panel,
+.welcome-card {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+/* /statistics 的图表卡此前带阴影，统一压平 */
+.chart-card { box-shadow: none !important; }
+
+/* 页面内节标题统一节奏（多处自建 .section-title 字号不一） */
+.section-title,
+.card-title,
+.panel-title,
+.chart-title {
+  font-size: var(--text-md);
+  font-weight: 650;
+  letter-spacing: -0.005em;
+  color: var(--text-primary);
+}
+
+/* 空状态统一 */
+.list-empty,
+.panel-empty,
+.empty-box,
+.empty-state {
+  color: var(--text-muted);
+  font-size: var(--text-base);
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+}

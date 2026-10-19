@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: elderly-care-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME:-elderly_care_sbbr0v5jespt}
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/sql/init_database.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$${MYSQL_ROOT_PASSWORD} || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - app-network
+
+  backend-python:
+    build:
+      context: ..
+      dockerfile: system_code/backend-python/Dockerfile
+    container_name: elderly-care-backend-python
+    restart: unless-stopped
+    environment:
+      PORT: 8090
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD}
+      DB_NAME: ${DB_NAME:-elderly_care_sbbr0v5jespt}
+      APP_ENV: production
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      # 部署骨干按论文 1.4 节为 YOLO26l-pose（独立选型）；BiFPN 消融权重仅供复现实验切换
+      AI_POSE_MODEL_PATH: ${AI_POSE_MODEL_PATH:-/app/thesis_assets/pose/weights/yolo26l-pose.pt}
+      AI_EXPR_MODEL_PATH: ${AI_EXPR_MODEL_PATH:-/app/thesis_assets/expr/weights/expr_lka_best.pt}
+      AI_DEVICE: ${AI_DEVICE:-cpu}
+      AI_FALL_THRESHOLD: ${AI_FALL_THRESHOLD:-0.3}
+      AI_EXPR_CONF: ${AI_EXPR_CONF:-0.25}
+      AI_ALLOW_REMOTE_IMAGE: ${AI_ALLOW_REMOTE_IMAGE:-false}
+      AI_ALLOWED_IMAGE_ROOT: ${AI_ALLOWED_IMAGE_ROOT:-/app/uploads}
+      CORS_ORIGINS: http://localhost:5173
+      TZ: Asia/Shanghai
+    ports:
+      - "8090:8090"
+    volumes:
+      - backend_uploads:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8090/api/health', timeout=5)\""]
+      interval: 15s
+      timeout: 8s
+      retries: 5
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: http://localhost:8090
+    container_name: elderly-care-frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_BASE_URL: http://localhost:8090
+      TZ: Asia/Shanghai
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend-python
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  backend_uploads:

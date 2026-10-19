@@ -1,0 +1,436 @@
+/* ============================================================================
+ * 全局布局契约（Layout Contract）
+ * ============================================================================
+ * 为什么需要这个文件：
+ *   审计发现全站**没有统一的布局体系** ——
+ *     6 种根容器：.page / .page-monitor / .page-video-detect /
+ *                 .patrol-container / .vital-container / .page-agent
+ *     2 种页头写法：.page-header（9 页）/ .header-section（2 页）
+ *     2 个页面（总览、AI 助手）连 h1 都没有
+ *   而且 .page-header 在 design-refine.css 里已有全局定义，各页面**又各自
+ *   重定义一遍**，细节还不一致（align-items: center vs flex-start，
+ *   margin-bottom: 20px vs 令牌值）。各写各的必然继续走样。
+ *
+ * 本文件的定位：**唯一的布局真相来源**。页面只写业务组件样式，
+ * 不再定义根容器、页头、面板、栅格、表格这些通用结构。
+ *
+ * 使用方式（所有页面一致）：
+ *   <div class="page">
+ *     <div class="page-header">
+ *       <div><h1>标题</h1><p class="page-sub">副标题</p></div>
+ *       <div class="page-actions">…按钮…</div>
+ *     </div>
+ *     <div class="grid-2-1">…</div>
+ *   </div>
+ *
+ * 统一约定：
+ *   · 根容器一律 .page，页头一律 .page-header
+ *   · 面板一律 .panel（标题 .panel-head > h2）
+ *   · 栅格只用 .grid-1-1 / .grid-2-1 / .grid-3-1，比例固定、间距相同
+ *   · 面板标题与表格文字**居中**，右侧附属信息用绝对定位不挤偏标题
+ *   · 所有间距取自 --space-* 令牌，不再出现 20px/24px 这类裸值
+ * ========================================================================== */
+
+/* ══════════ 1. 页面骨架 ══════════ */
+.page {
+  padding: var(--space-5) var(--space-6) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* 页头：左标题 / 右操作。标题区可含 h1 + 副标题 + 状态标签 */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-1);
+}
+.page-header h1 {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+  margin: 0;
+  line-height: 1.25;
+}
+.page-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 3px 0 0;
+  line-height: 1.5;
+}
+/* 标题左侧可放状态标签（如"监控中"），与副标题同一行 */
+.page-header-left { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.page-actions { display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
+
+/* ══════════ 2. 面板 ══════════ */
+/* 与 design-refine.css 的 .panel 保持同一视觉；这里补齐"标题居中"的骨架，
+   因为右侧附属信息若用普通 flex 排列会把标题挤偏。 */
+.panel {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  position: relative;          /* 附属信息绝对定位的锚点 */
+  margin-bottom: var(--space-3);
+}
+.panel-head h2,
+.panel-head .panel-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  text-align: center;
+}
+/* 右侧附属信息（条数、切换按钮）始终贴右，不影响标题居中 */
+.panel-head > .panel-sub,
+.panel-head > .seg {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.panel-head > .panel-sub { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.panel-note {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  margin: var(--space-2) 0 0;
+  line-height: 1.6;
+}
+.panel-empty,
+.empty {
+  padding: var(--space-6);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* 加载失败时的行内提示。
+   存在的理由是纠正一类**说反了的界面**：这些区块原先都是 `catch {}`，
+   请求失败后照常渲染空态 —— 于是"设备列表读不出来"被显示成「暂无已注册设备」、
+   "体征接口挂了"被显示成「各项体征均在配置范围内」。
+   对使用者来说，这两个结论指向完全相反的行动，必须区分开。
+   用 --danger 系而非灰字：它不是"没有数据"的中性状态，是需要处理的故障。 */
+.load-error {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-md);
+  background: var(--danger-soft);
+  color: var(--danger-text);
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: start;
+}
+
+/* ══════════ 3. 栅格：比例固定，只用这三种 ══════════ */
+.grid-1-1 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.grid-2-1 { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--space-4); }
+.grid-3-1 { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); gap: var(--space-4); }
+/* 主区+侧栏（视频类页面常用：左侧画面，右侧结论） */
+.grid-main-side { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 3fr); gap: var(--space-4); }
+/* 主区+**固定宽**侧栏：视频页真正的需求不是"7:3 的比例"，而是
+   "侧栏宽度恒定、画面吃掉剩下的全部宽度" —— 窗口越宽画面越大，而结论栏
+   不该跟着变宽（结论栏里是一列短字段，变宽只是留白）。
+   此前实时监控与视频检测各自把 .grid-main-side 的列定义整个覆盖掉，
+   于是同名的类在不同页面表现不同；现在把它作为契约里的一个正式变体，
+   侧栏宽度用变量控制，页面只设 --side-w。 */
+.grid-main-fixed {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--side-w, 360px);
+  gap: var(--space-4);
+  /* 刻意**不用** align-items: start：那样主区与侧栏各自按内容高度收尾，
+     底部参差不齐（实测同一行 622 与 771）。默认 stretch 让两块等高，
+     侧栏的列表内部自己滚动即可 —— 页面上"每一行的块一样高"比
+     "侧栏刚好包住内容"更重要。 */
+}
+
+@media (max-width: 1180px) {
+  .grid-1-1, .grid-2-1, .grid-3-1, .grid-main-side, .grid-main-fixed { grid-template-columns: 1fr; }
+}
+
+/* ══════════ 4. 表格：文字居中（全站统一）══════════ */
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl th {
+  text-align: center;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+.tbl td {
+  text-align: center;
+  padding: 10px 6px;
+  border-bottom: 1px solid var(--tint-2);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.tbl tbody tr:last-child td { border-bottom: none; }
+.tbl tbody tr:hover td { background: var(--tint-1); }
+
+/* ══════════ 5. 分段按钮（面板标题右侧的切换）══════════ */
+.seg { display: flex; gap: 4px; }
+.seg-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  border: 1px solid var(--border-default);
+  background: transparent;
+  color: var(--text-tertiary);
+  transition: all .15s;
+}
+.seg-btn.on {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-soft, rgba(74, 111, 165, .12));
+  font-weight: 600;
+}
+
+/* ══════════ 6. 通用按钮尺寸 ══════════ */
+.btn-xs {
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  border: 1px solid var(--primary);
+  background: var(--primary-soft, rgba(74, 111, 165, .12));
+  color: var(--primary);
+  transition: all .15s;
+}
+.btn-xs:hover { background: var(--primary); color: #fff; }
+.btn-xs.ghost { border-color: var(--border-default); background: transparent; color: var(--text-tertiary); }
+.btn-xs.ghost:hover { background: var(--bg-hover); color: var(--text-secondary); }
+
+/* ══════════ 7. 指标大数字（各页共用）══════════ */
+.stat-center { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.big-num {
+  font-size: 34px;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  text-align: center;
+}
+.big-num.ok { color: var(--level-normal); }
+.big-num.warn { color: var(--level-medium); }
+.big-sep { color: var(--text-muted); font-weight: 600; margin: 0 2px; }
+.big-sub { font-size: 12px; color: var(--text-muted); text-align: center; }
+
+/* 进度条（在线率等） */
+.rate-bar { height: 10px; border-radius: 5px; background: var(--tint-2); overflow: hidden; }
+.rate-fill { height: 100%; background: var(--level-normal); border-radius: 5px; transition: width .35s ease; }
+
+/* ══════════ 8. 视频舞台（实时监控 / 视频检测共用）══════════ */
+.stage {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(160deg, var(--bg-stage), var(--bg-stage-deep));
+  box-shadow: inset 0 0 0 1px var(--tint-2);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.stage .stage-el { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.stage .stage-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+
+/* 舞台上的角标（LIVE / 全屏）*/
+.stage-badge {
+  position: absolute; top: 10px; left: 10px; z-index: 11;
+  display: flex; align-items: center; gap: 5px;
+  padding: 3px 8px; border-radius: 5px;
+  font-size: 10px; font-weight: 700; color: #fff;
+  background: rgba(239, 68, 68, .88);
+}
+.stage-badge .dot { width: 5px; height: 5px; border-radius: 50%; background: #fff; animation: stage-blink 1s infinite; }
+@keyframes stage-blink { 0%, 100% { opacity: 1 } 50% { opacity: .3 } }
+.stage-action {
+  position: absolute; top: 10px; right: 10px; z-index: 11;
+  width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--tint-5); background: var(--bg-overlay);
+  color: var(--text-secondary); font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+}
+.stage-action:hover { background: var(--bg-hover); }
+
+/* ══════════ 9. 证据小标签（各页共用）══════════ */
+.chip {
+  display: inline-block; padding: 2px 8px; border-radius: 20px;
+  font-size: 11px; font-weight: 600;
+  background: var(--tint-2); color: var(--text-secondary);
+  border: 1px solid var(--tint-3);
+}
+.lvl {
+  display: inline-block; min-width: 54px; padding: 2px 8px;
+  border-radius: 20px; text-align: center;
+  font-size: 11px; font-weight: 700; color: #fff;
+}
+
+/* ══════════ 8.5 面板内边距：内容不得贴到边框 ══════════
+   .panel 等卡片此前只有 padding: 0 + overflow: hidden，于是面板标题、
+   表头文字直接顶在 1px 边框上，右侧的操作按钮也贴边（"文字越过边界线"
+   的直观感受就来自这里）。统一在契约里给内边距，页面不要再自己写。 */
+.panel,
+.chart-card,
+.table-card,
+.list-card,
+.info-card,
+.form-card {
+  padding: var(--space-4);
+}
+/* 面板里的表格：左右再收一点，表头文字与边框之间留出呼吸位 */
+.panel > .tbl-wrap,
+.panel > .table-wrap { margin: 0 calc(-1 * var(--space-1)); }
+/* 面板头部与表体之间不留多余空隙（头部自己已有 margin-bottom） */
+.panel-head:last-child { margin-bottom: 0; }
+
+/* ══════════ 9. 列表工具栏：筛选 + 查询 + 批量操作 ══════════ */
+/* 为什么统一到这里：此前 Alerts / Audit / Medication / Patrol / VitalSign /
+   Elders 六个页面**各写了一份 `.filter-bar`**，而且样式互不相同 ——
+   Alerts 与 Medication 是带底框的卡片，Audit 与 Elders 是裸的一行，
+   gap 有 6/8/10px 三种，下边距有 16/18/20px 三种；输入框类名更是有
+   filter-input / filter-select / search-input / select-input / input-field 五种。
+   同一件事在六个地方各管一份，结果必然是"每页看着都差点意思"。
+   颜色走过同样的弯路（散落的硬编码暗色值），教训是一样的：
+   **公共视觉只留一个定义处。**
+
+   结构约定（顺序固定，不要随意调换）：
+     .toolbar
+       ├─ .toolbar-search   关键词搜索（最左，占比最大）
+       ├─ .toolbar-field    下拉/日期等条件
+       ├─ .toolbar-spacer   弹性占位，把后面的操作推到最右
+       └─ .toolbar-actions  右侧操作按钮（新增/导出/批量…）
+*/
+.toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  padding: 12px 14px;
+  background: var(--bg-surface-2, var(--tint-1));
+  border: 1px solid var(--tint-3);
+  border-radius: var(--radius-md);
+}
+
+/* 关键词搜索框：最左且吃掉剩余宽度，但要有下限，窄屏不塌成一条缝 */
+.toolbar-search {
+  flex: 1 1 200px;
+  min-width: 160px;
+  max-width: 320px;
+  height: 34px;
+  padding: 0 12px;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm, 6px);
+}
+.toolbar-search::placeholder { color: var(--text-muted); }
+
+/* 下拉 / 日期等条件控件：统一高度 34px，避免一行里高低不齐 */
+.toolbar-field,
+.toolbar select,
+.toolbar input[type='date'],
+.toolbar input[type='month'] {
+  flex: 0 0 auto;
+  height: 34px;
+  padding: 0 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm, 6px);
+}
+.toolbar select { padding-right: 26px; cursor: pointer; }
+
+/* 条件前后的说明文字（"至"、"共 N 条"等） */
+.toolbar-label {
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* 弹性占位：把它之后的内容推到最右 */
+.toolbar-spacer { flex: 1 1 auto; }
+
+/* 右侧操作区：始终靠右且整体不换行（按钮之间允许换行） */
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+/* 工具栏里的按钮高度必须与筛选控件一致。
+   各页的按钮类（.btn-primary / .btn-xs / .btn-sm）自带 padding，放进工具栏后
+   会比 34px 高出一两像素 —— 单独看没问题，但排在同一行里就是"右边那个按钮
+   比左边的下拉框高出一点"，正是"排版不合理"最直观的表现。
+   在这里统一压到 34px；页面别处仍用各按钮自己的尺寸。 */
+.toolbar-actions > button,
+.toolbar > button:not(.toolbar-reset) {
+  height: 34px;
+  padding-top: 0;
+  padding-bottom: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* 工具栏里的重置：弱化处理，避免和主操作抢注意力 */
+.toolbar-reset {
+  height: 34px;
+  padding: 0 12px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+}
+.toolbar-reset:hover { color: var(--primary); border-color: var(--primary); }
+.toolbar-reset:disabled { opacity: .45; cursor: not-allowed; }
+.toolbar-reset:disabled:hover { color: var(--text-tertiary); border-color: var(--border-default); }
+
+/* 操作列右对齐。
+   表格里每行的按钮个数不一样（待处理的行有 确认/误报，已处理的行只有 时间线），
+   若居中对齐，"1 个按钮"会比"3 个按钮"更靠右，右缘参差不齐 —— 扫一眼就觉得乱。
+   右对齐之后所有按钮的右缘落在同一条竖线上，列的边界也就稳定了。 */
+.tbl th.action-col,
+.tbl td.action-col,
+.tbl th.cell-actions,
+.tbl td.cell-actions { text-align: right; }
+
+/* 行内操作按钮组：表格/卡片里的 查看/确认/误报 等
+   固定不换行 + 等宽，让每一行的按钮列对得齐 —— 否则按钮数量不同的行
+   会把表格拉得参差不齐（之前"排版不合理"最直观的来源之一）。 */
+.row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  white-space: nowrap;
+}
+.row-actions > button { flex: 0 0 auto; }
+
+@media (max-width: 720px) {
+  .toolbar { padding: 10px 12px; }
+  /* 窄屏：搜索框独占一行，条件与操作各占一行，避免挤在一起换行错乱 */
+  .toolbar-search { flex: 1 1 100%; max-width: none; }
+  .toolbar-actions { margin-left: 0; flex: 1 1 100%; }
+}

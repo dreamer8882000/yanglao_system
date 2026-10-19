@@ -1,0 +1,39 @@
+{
+  "env": {
+    "browser": true,
+    "es2022": true,
+    "node": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:vue/vue3-recommended"
+  ],
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "rules": {
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "semi": ["error", "always"],
+    "quotes": ["warn", "single", { "avoidEscape": true }],
+    "vue/multi-word-component-names": "off",
+    "vue/no-v-html": "warn",
+    "vue/require-default-prop": "off",
+    "vue/html-self-closing": ["warn", {
+      "html": {
+        "void": "always",
+        "normal": "never",
+        "component": "always"
+      }
+    }],
+    "vue/max-attributes-per-line": ["warn", {
+      "singleline": 3,
+      "multiline": 1
+    }]
+  },
+  "ignorePatterns": [
+    "node_modules/",
+    "dist/"
+  ]
+}

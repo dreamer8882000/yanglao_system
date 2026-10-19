@@ -1,0 +1,309 @@
+/**
+ * 🎨 设计令牌 — 亮色为主（医疗专业风），可切换深色
+ *
+ * 背景：原设计只有深色一套，且大量用 rgba(255,255,255,α) 做表面/边框
+ * （404 处），一旦切亮色就会全部失效（白叠加在白底上看不见）。
+ * 这里把「叠加层」抽象成 --tint-* 令牌，同一处写法在两种主题下都成立。
+ *
+ * 文字对比度（对亮色 --bg-app #f5f7fa / --bg-surface #ffffff）：
+ *   text-primary   16.9:1 ✓ AAA
+ *   text-secondary 10.4:1 ✓ AAA
+ *   text-tertiary   4.8:1 ✓ AA
+ *   text-muted      4.5:1 ✓ AA（小字可用）
+ */
+
+:root,
+[data-theme='light'] {
+  /* 原生控件（下拉菜单、滚动条、日期选择器、自动填充）的配色方案。
+     不声明的话，浏览器会按自己的默认值渲染，于是会出现
+     「白色界面里弹出深蓝色下拉菜单」这种明显不一致。 */
+  color-scheme: light;
+
+  /* ── 背景层级 ───────────────────────────────────────── */
+  --bg-app: #ffffff;            /* 纯白底（保留 Arctic Frost 冷色主色与细边）*/
+  --bg-surface: #ffffff;        /* Crisp White */
+  --bg-surface-2: #f8fafc;
+  --bg-elevated: #ffffff;
+  --bg-inset: #f1f5f9;
+  /* 视频/图像"舞台"底色 —— 实时监控与视频检测**共用同一个令牌**。
+     此前两边各写各的（#050d1a / #020617），颜色不同、观感也不一致。
+     刻意不用纯黑：与整体浅色体系冲突，且纯黑会把页面压得很重。
+     仍保留浅灰蓝以呈现"凹陷的取景框"语义。 */
+  --bg-stage: #e8eef6;
+  --bg-stage-deep: #dbe4ef;
+  --bg-hover: rgba(74, 111, 165, 0.07);
+  --bg-active: rgba(74, 111, 165, 0.12);
+  --bg-sidebar: #ffffff;
+  --bg-overlay: rgba(15, 23, 42, 0.45);
+
+  /* ── 叠加层（表面/边框共用，主题无关写法）────────────── */
+  --tint-1: rgba(74, 111, 165, 0.07);
+  --tint-2: rgba(74, 111, 165, 0.10);
+  --tint-3: rgba(74, 111, 165, 0.18);
+  --tint-4: rgba(74, 111, 165, 0.28);
+  --tint-5: rgba(74, 111, 165, 0.42);
+
+  /* ── 文字层级 ──────────────────────────────────────── */
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-tertiary: #4d5f78;
+  --text-muted: #5f7189;
+  --text-disabled: #9aa7b6;
+  --text-on-color: #ffffff;
+
+  /* ── 边框 ──────────────────────────────────────────── */
+  --border-subtle: rgba(74, 111, 165, 0.14);
+  --border-default: rgba(74, 111, 165, 0.20);
+  --border-strong: rgba(74, 111, 165, 0.34);
+
+  /* ── 主色 / 语义色（亮底上加深以保证对比）────────────── */
+  --primary: #4a6fa5;          /* Arctic Frost · Steel Blue */
+  --primary-hover: #3d5c8a;
+  --primary-active: #334e75;
+  --primary-soft: rgba(74, 111, 165, 0.14);
+  --primary-border: rgba(74, 111, 165, 0.38);
+
+  --success: #059669;
+  --success-text: #047857;
+  --success-soft: rgba(5, 150, 105, 0.10);
+
+  --warning: #d97706;
+  --warning-text: #b45309;
+  --warning-soft: rgba(217, 119, 6, 0.10);
+
+  --danger: #dc2626;
+  --danger-text: #b91c1c;
+  --danger-soft: rgba(220, 38, 38, 0.10);
+
+  --violet: #7c3aed;
+  --violet-text: #6d28d9;
+  --info: #0891b2;
+
+  /* ── 告警等级：全站唯一的等级配色来源 ──────────────────
+     页面里**不要再写等级色字面量**。此前有 4 套互相矛盾的定义：
+       utils/index.js riskColor  {URGENT:#7c3aed, HIGH:#ef4444, MEDIUM:#f97316, LOW:#3b82f6}
+       Dashboard/Monitor/Evaluation 各自一份 LEVEL_COLOR（用 token，这份是对的）
+       VideoDetect  {NORMAL:#10b981, LOW:#84cc16, MEDIUM:#f59e0b, HIGH:#ef4444, URGENT:#b91c1c}
+       Alerts.vue   .lvl-medium { border-left: 3px solid #f97316 }
+     结果是同一个 LOW 在告警中心是蓝、在总览是绿；同一个 MEDIUM 有 4 个色值。
+
+     LOW 必须与 NORMAL 不同色：两个数值原先是同一个绿（#059669 / #10b981），
+     于是"低危"和"正常"渲染出完全一样的胶囊，看的人无从分辨。
+     现在 LOW 用青色 —— 落在 绿→青→琥珀→红→紫 的严重度阶梯上，
+     既不与"正常"的绿混同，也不与主色（钢蓝）撞。 */
+  --level-normal: #059669;
+  --level-low: #0e7490;
+  --level-medium: #d97706;
+  --level-high: #dc2626;
+  --level-urgent: #7c3aed;
+  /* 各等级对应的浅底色（分级条、等级胶囊等大面积着色）。
+     之前多处直接写 rgba(...)，换主题时不会跟着变 —— 与默认暗色值硬编码
+     是同一类问题。统一在这里定义，两个主题各一份。
+     注意 --level-low-soft 原先**漏了**：谁用了它就会拿到一个未定义变量，
+     表现为背景透明（而不是报错），属于最难发现的一类样式缺陷。 */
+  --level-normal-soft: rgba(5, 150, 105, 0.14);
+  --level-low-soft: rgba(14, 116, 144, 0.14);
+  --level-medium-soft: rgba(217, 119, 6, 0.16);
+  --level-high-soft: rgba(220, 38, 38, 0.14);
+  --level-urgent-soft: rgba(124, 58, 237, 0.14);
+
+  /* ── 中性色 / 阴影基色（供 color-mix 使用）─────────────
+     页面里那些 rgba(100,116,139,.x)、rgba(0,0,0,.x) 都属于这一类：
+     它们不是语义色，但也必须随主题走（亮色下的黑色阴影与暗色下不是一回事）。 */
+  --neutral: #64748b;
+  --shadow-color: #0f172a;
+
+  /* ── 画布叠加层（Canvas 专用，由 utils/themeColors.js 运行时解析）──
+     画布不能用 var()，但更需要跟随主题：视频舞台亮色下是浅灰蓝、
+     暗色下是近黑，骨架轮廓色与信息面板底色必须跟着翻。
+     轮廓用深色：它要在浅舞台和亮画面上提供对比。 */
+  --overlay-halo: rgba(15, 23, 42, 0.55);
+  --bg-panel-overlay: rgba(255, 255, 255, 0.92);
+
+  /* ── 间距 / 圆角 / 字号 ────────────────────────────── */
+  --font-sans: 'Inter', -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif;
+  --font-weight-heading: 700;
+
+  --header-h: 60px;          /* 顶部导航高度，页面高度以此为基准 */
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 999px;
+
+  --text-xs: 10px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+
+  /* ── 阴影（亮色用柔和中性阴影）────────────────────── */
+  --shadow-sm: 0 1px 3px rgba(74, 111, 165, 0.10);
+  --shadow-md: 0 4px 14px rgba(74, 111, 165, 0.12);
+  --shadow-lg: 0 8px 28px rgba(74, 111, 165, 0.16);
+  --shadow-xl: 0 16px 44px rgba(15, 23, 42, 0.14);
+
+  /* ── 动效 / 层级 ──────────────────────────────────── */
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+
+  --z-dropdown: 100;
+  --z-drawer: 200;
+  --z-modal: 300;
+  --z-toast: 400;
+}
+
+/* ══════════════════════════════════════════════════════════
+   深色主题（可切换）——仅覆盖颜色，结构与间距共用
+   ══════════════════════════════════════════════════════════ */
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg-app: #080f1c;
+  --bg-surface: #0d1626;
+  --bg-surface-2: #121d30;
+  --bg-elevated: #16233a;
+  --bg-inset: #0a1220;
+  --bg-stage: #0c1524;
+  --bg-stage-deep: #070d18;
+  --bg-hover: rgba(255, 255, 255, 0.045);
+  --bg-active: rgba(59, 130, 246, 0.12);
+  --bg-sidebar: rgba(8, 13, 24, 0.97);
+  --bg-overlay: rgba(0, 0, 0, 0.55);
+
+  --tint-1: rgba(255, 255, 255, 0.03);
+  --tint-2: rgba(255, 255, 255, 0.05);
+  --tint-3: rgba(255, 255, 255, 0.08);
+  --tint-4: rgba(255, 255, 255, 0.12);
+  --tint-5: rgba(255, 255, 255, 0.20);
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --text-muted: #7d90a8;
+  --text-disabled: #6b7d93;
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-default: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.20);
+
+  --primary: #3b82f6;
+  --primary-hover: #60a5fa;
+  --primary-active: #2563eb;
+  --primary-soft: rgba(59, 130, 246, 0.12);
+  --primary-border: rgba(59, 130, 246, 0.30);
+
+  --success: #10b981;
+  --success-text: #34d399;
+  --success-soft: rgba(16, 185, 129, 0.12);
+
+  --warning: #f59e0b;
+  --warning-text: #fbbf24;
+  --warning-soft: rgba(245, 158, 11, 0.12);
+
+  --danger: #ef4444;
+  --danger-text: #f87171;
+  --danger-soft: rgba(239, 68, 68, 0.12);
+
+  --violet: #8b5cf6;
+  --violet-text: #a78bfa;
+  --info: #06b6d4;
+
+  /* 等级色（深色主题）：与亮色同一套语义，只调明度 —— 见亮色块里的长注释 */
+  --level-normal: #10b981;
+  --level-low: #22d3ee;
+  --level-medium: #f59e0b;
+  --level-high: #ef4444;
+  --level-urgent: #a78bfa;
+  --level-normal-soft: rgba(16, 185, 129, 0.16);
+  --level-low-soft: rgba(34, 211, 238, 0.16);
+  --level-medium-soft: rgba(245, 158, 11, 0.18);
+  --level-high-soft: rgba(239, 68, 68, 0.16);
+  --level-urgent-soft: rgba(167, 139, 250, 0.18);
+
+  --neutral: #94a3b8;
+  --shadow-color: #000000;
+
+  /* 暗色下轮廓要反过来用浅色（否则黑底上的深色描边等于没画） */
+  --overlay-halo: rgba(2, 6, 23, 0.75);
+  --bg-panel-overlay: rgba(13, 22, 38, 0.92);
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.18);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.24);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.32);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.42);
+}
+
+/* ── 基础排版 ─────────────────────────────────────────── */
+html,
+body {
+  background: var(--bg-app);
+  color: var(--text-primary);
+}
+
+body {
+  font-size: var(--text-md);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  scroll-behavior: smooth;
+}
+
+::selection {
+  background: var(--primary-soft);
+  color: var(--text-primary);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--tint-4);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--tint-5);
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+@media (max-width: 860px) {
+  :root { --header-h: 104px; }   /* 顶栏在窄屏折行 */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

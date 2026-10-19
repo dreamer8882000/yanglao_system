@@ -1,0 +1,400 @@
+/**
+ * 🎨 全局 UI 增强样式
+ * 提升视觉质感、微交互、动画流畅度
+ */
+
+/* ============================================
+   1. 全局变量与基础优化
+   ============================================ */
+:root {
+  /* 色彩增强 */
+  --glow-primary: rgba(59, 130, 246, 0.4);
+  --glow-success: rgba(16, 185, 129, 0.3);
+  --glow-danger: rgba(239, 68, 68, 0.35);
+  --glow-warning: rgba(249, 115, 22, 0.3);
+  
+  /* 动画缓动 */
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  
+  /* 阴影层级 */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.24);
+}
+
+/* 字体优化（数字） */
+.numeric {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  letter-spacing: -0.02em;
+}
+
+/* 平滑滚动 */
+* {
+  scroll-behavior: smooth;
+}
+
+/* ============================================
+   2. 卡片增强效果
+   ============================================ */
+.stat-card,
+.monitor-card,
+.chart-card,
+.panel {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s var(--ease-smooth),
+              box-shadow 0.25s var(--ease-smooth),
+              border-color 0.25s var(--ease-smooth);
+}
+
+.stat-card:hover,
+.chart-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* 卡片光泽效果 */
+.stat-card::before,
+.chart-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.03),
+    transparent
+  );
+  transition: left 0.6s var(--ease-smooth);
+  pointer-events: none;
+}
+
+.stat-card:hover::before,
+.chart-card:hover::before {
+  left: 100%;
+}
+
+/* ============================================
+   3. 按钮增强效果
+   ============================================ */
+button,
+.btn-primary,
+.btn-login,
+.btn-export {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s var(--ease-smooth);
+}
+
+/* 涟漪动画 */
+button::after,
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.4s var(--ease-out), height 0.4s var(--ease-out);
+  pointer-events: none;
+}
+
+button:active::after,
+.btn-primary:active::after {
+  width: 200px;
+  height: 200px;
+}
+
+/* 主按钮发光效果 */
+.btn-login:hover:not(:disabled),
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 4px 20px var(--glow-primary),
+              0 0 0 1px rgba(59, 130, 246, 0.3) inset;
+}
+
+/* ============================================
+   4. 状态徽章优化
+   ============================================ */
+.status-chip,
+.level-badge,
+.conn-badge {
+  position: relative;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s var(--ease-smooth);
+}
+
+.status-chip.done,
+.conn-live {
+  box-shadow: 0 0 12px var(--glow-success);
+}
+
+.status-chip.pending {
+  box-shadow: 0 0 10px var(--glow-warning);
+}
+
+.level-badge {
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================
+   5. 数据可视化优化
+   ============================================ */
+.stat-val,
+.metric-value,
+.stat-value {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  letter-spacing: -0.03em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s var(--ease-spring);
+}
+
+.stat-card:hover .stat-val {
+  transform: scale(1.05);
+}
+
+/* 进度条动画 */
+.progress-bar,
+.metric-chart .progress-bar {
+  transition: width 0.6s var(--ease-smooth);
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+}
+
+/* ============================================
+   6. 输入框增强
+   ============================================ */
+.input-wrap {
+  transition: all 0.25s var(--ease-smooth);
+}
+
+.input-wrap:focus-within {
+  border-color: rgba(59, 130, 246, 0.6) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08),
+              0 2px 8px rgba(59, 130, 246, 0.12);
+  transform: translateY(-1px);
+}
+
+.filter-input:focus,
+.filter-select:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+  transform: translateY(-1px);
+}
+
+/* ============================================
+   7. 模态框/抽屉优化
+   ============================================ */
+.modal-mask,
+.drawer-mask {
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s var(--ease-smooth);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-box,
+.drawer {
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6),
+              0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  animation: slideIn 0.3s var(--ease-smooth);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   8. 告警流动画
+   ============================================ */
+.alert-row,
+.alert-card {
+  animation: fadeInUp 0.3s var(--ease-smooth);
+  transition: all 0.2s var(--ease-smooth);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.alert-row.is-new {
+  animation: newAlertPulse 0.6s var(--ease-smooth);
+}
+
+@keyframes newAlertPulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+  50% { transform: scale(1.02); box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+
+/* ============================================
+   9. 时间线优化
+   ============================================ */
+.tl-dot.active {
+  animation: dotPulse 2s var(--ease-smooth) infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.8),
+                0 0 24px rgba(16, 185, 129, 0.4);
+  }
+}
+
+/* ============================================
+   10. 加载状态优化
+   ============================================ */
+.table-state,
+.panel-empty {
+  animation: fadeIn 0.4s var(--ease-smooth);
+}
+
+/* 骨架屏动画 */
+@keyframes skeleton {
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.02) 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  background-size: 200px 100%;
+  animation: skeleton 1.5s ease-in-out infinite;
+}
+
+/* ============================================
+   11. 滚动条美化
+   ============================================ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ============================================
+   12. 图表容器优化
+   ============================================ */
+.chart-area {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.chart-area::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(59, 130, 246, 0.03),
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/* ============================================
+   13. 验证码优化
+   ============================================ */
+.captcha-box {
+  transition: all 0.2s var(--ease-smooth);
+}
+
+.captcha-box:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.2);
+}
+
+/* ============================================
+   14. 响应式优化
+   ============================================ */
+@media (max-width: 768px) {
+  /* 移动端触控目标最小尺寸 */
+  button,
+  .btn-sm-action {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* 卡片间距优化 */
+  .stat-card,
+  .chart-card {
+    margin-bottom: 12px;
+  }
+  
+  /* 简化动画 */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* ============================================
+   15. 打印优化
+   ============================================ */
+@media print {
+  .btn-export,
+  .header-actions,
+  .filter-bar,
+  .pagination {
+    display: none !important;
+  }
+  
+  .chart-card,
+  .stat-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

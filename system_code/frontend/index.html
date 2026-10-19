@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>智慧养老 - 跌倒检测告警系统</title>
+  <style>
+    /* ── 只放「必须早于应用 CSS 生效」的规则 ──────────────────────────────
+       这里内联的是首屏兜底与原生控件外观重置。**不放任何颜色主题**：
+       配色由 src/assets/styles/tokens.css 按 data-theme 统一管理，
+       早先这里写死的一批暗色值（深蓝底、深色 autofill、深色 select option）
+       在切换成亮色主题后全部变成了 bug —— 白色界面里弹出深蓝色下拉菜单、
+       自动填充显示成深色块。根因是「同一件事有两个地方在管」。
+       需要主题化的原生控件外观，现在由 tokens.css 的 color-scheme 负责。 */
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* 首屏兜底底色：与默认（亮色）主题的 --bg-app 一致，
+       避免应用 CSS 加载前出现一闪而过的异色。 */
+    body {
+      background: #ffffff;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    /* text/password/search/email 类输入框：清除默认外观，完全由 CSS 控制 */
+    input:not([type='date']):not([type='time']):not([type='datetime-local']):not([type='number']):not([type='range']):not([type='checkbox']):not([type='radio']):not([type='file']),
+    textarea {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+
+    /* select / button：清除默认外观（各 view 自行控制样式） */
+    select, button {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+    button { cursor: pointer; }
+
+    /* number 输入框去除 spinner（各 view 自行控制） */
+    input[type='number']::-webkit-inner-spin-button,
+    input[type='number']::-webkit-outer-spin-button { opacity: 0.4; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
